@@ -1,0 +1,42 @@
+
+Contact:
+	Name:
+		John Doe
+	Email:
+		john@doe.com
+	Number:
+		+4800011122
+	Birthday:
+		19800101
+	Tag:
+		Work
+
+Contact:
+	Name:
+		John Doe
+	Email:
+		john@home.com
+	Number:
+		+4800011122
+	Birthday:
+		19800101
+	Tag:
+		Personal
+
+Contact:
+	Name:
+		Foo Bar
+	Email:
+		foo@bar.com
+	Birthday:
+		20000101
+
+Contact:
+	Name:
+		Bar Foo
+	Email:
+		bar@foo.com
+	Number:
+		+490110102
+	Tag:
+		University
