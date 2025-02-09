@@ -86,9 +86,12 @@ if $missing_deps; then
     exit 1
 else
     echo -e "\e[34mAll dependencies are installed\e[0m"
-    mkdir ~/.cbook/
-    cp address.book ~/.cbook/
-    echo "A template Adressbook has been created in ~/.cbook/address.book"
+    if [-d "~/.cbook"]; then
+    else
+        mkdir ~/.cbook/
+        cp address.book ~/.cbook/
+        echo "A template Adressbook has been created in ~/.cbook/address.book"
+    fi
     echo -e "Linking to \e[31m/usr/local/bin\e[0m."
     echo "Do you wish to continue with installation? (yes/no)"
     read confirm
