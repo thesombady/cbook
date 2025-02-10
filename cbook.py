@@ -167,19 +167,6 @@ class Contact:
     tag:      Tag  = Tag.none
     matrix:   str  = None
 
-    def __repr__(self):
-        fields: List[str] = [self.name] 
-        if self.tag != Tag.none:
-            fields.append(f'@{self.tag}')
-        fields.append(self.mail)
-        if self.birthday != None:
-            fields.append(str(self.birthday))
-        if self.number != None:
-            fields.append(self.number)
-        if self.matrix != None:
-            fields.append(self.matrix)
-        return (' | ').join(fields)
-
     def __str__(self):
         fields: List[str] = [self.name] 
         if self.tag != Tag.none:
@@ -206,22 +193,7 @@ class Contact:
                 tag_filter = True
             else:
                 tag_filter = False
-        match filter:
-            case searchType.name:
-                return self.name.lower().__contains__(search_term) and tag_filter
-            case searchType.mail:
-                return self.mail.lower().__contains__(search_term) and tag_filter
-            case searchType.full:
-                return str(self).__contains__(search_term) and tag_filter
-            case searchType.birthday:
-                return str(self.birthday).__contains__(search_term) and tag_filter
-            case searchType.number:
-                return self.number.__contains__(search_term) and tag_filter
-            case searchType.tag:
-                return str(self.tag).lower().__contains__(search_term) and tag_filter
-            case searchType.matrix:
-                return self.matrix.lower().__contains__(search_term) and tag_filter
-                
+        return self.log(filter) and tag_filter
 
     def log(self, filter: searchType):
         match filter:
@@ -284,7 +256,7 @@ def search_with_fzf():
     try:
         # TODO: -m and iterate over result instead
         result = subprocess.check_output(f'echo "{logAdressBook()}" | fzf --preview=', shell=True, text=True).strip()
-        line_number = int(subprocess.check_output(f'echo "{logAdressBook()})" | grep -n "{result.split('|')[0]}" ', shell=True, text=True).strip().split(':')[0])
+        line_number = int(subprocess.check_output(f'echo "{logAdressBook()})" | grep -n "{result}" ', shell=True, text=True).strip().split(':')[0])
         return result, line_number
     except subprocess.CalledProcessError:
         return None, None  # Handles cases where no selection is made
