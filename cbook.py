@@ -9,6 +9,7 @@ from datetime import date
 
 BOOKPATH = os.path.join(os.getenv('HOME') ,'.cbook/address.book')
 TAB = '\t'
+ALL = 1000
 
 
 def print_help_info():
@@ -104,6 +105,8 @@ class Preference:
                     self.result_type = searchType.number
                 case '--birthday' | '-b':
                     self.result_type = searchType.birthday
+                case '--from-email' | '--from-mail':
+                    self.input_type = searchType.email
                 case '--full' | '-f':
                     self.result_type = searchType.full
                 case '--from-name' | '-fn':
@@ -120,7 +123,7 @@ class Preference:
                 case str(x) if '--show' in x:
                     number = arg.split('=')[1]
                     if number == 'all' or number == 'ALL':
-                        number = 100 # Probably not more than 100 with the same filter
+                        number = ALL # Probably not more than 100 with the same filter
                     else:
                         number = int(number)
                     self.maxOutput = number
@@ -149,6 +152,7 @@ class Preference:
 class Contact:
     name: str
     email: str
+    # matrix: str    = None
     birthday: date = None
     number: str    = ''
     tag: Tag       = Tag.none
@@ -202,6 +206,18 @@ class Contact:
             case searchType.tag:
                 return str(self.tag).lower().__contains__(search_term) and tag_filter
 
+    def log(self, filter: searchType):
+        match filter:
+            case searchType.name:
+                return self.name
+            case searchType.email:
+                return self.email
+            case searchType.birthday:
+                return str(self.birthday)
+            case searchType.number:
+                return self.number
+        
+
 CONTACTS: Dict[int, Contact] = dict()
 
 def loadAdressBook():
@@ -245,13 +261,12 @@ parseAdressBook(loadAdressBook())
 
 def search_with_fzf():
     try:
-        result = subprocess.check_output(f'echo "{logAdressBook()}" | fzf', shell=True, text=True).strip()
+        # TODO: -m and iterate over result instead
+        result = subprocess.check_output(f'echo "{logAdressBook()}" | fzf --preview=', shell=True, text=True).strip()
         line_number = int(subprocess.check_output(f'echo "{logAdressBook()})" | grep -n "{result.split('|')[0]}" ', shell=True, text=True).strip().split(':')[0])
         return result, line_number
     except subprocess.CalledProcessError:
         return None, None  # Handles cases where no selection is made
-
-
 
 if __name__ == '__main__':
     pref: Preference = Preference(sys.argv[1:])
@@ -261,21 +276,17 @@ if __name__ == '__main__':
         if selected_contact == None:
             exit(0)
 
-        match pref.result_type:
-            case searchType.email:
-                print(CONTACTS[number].email)
-            case searchType.name:
-                print(CONTACTS[number].name)
-            case searchType.number:
-                print(CONTACTS[number].number)
-            case searchType.birthday:
-                print(CONTACTS[number].birthday)
-            case searchType.full:
-                print(CONTACTS[number])
+        print(CONTACTS[number].log(pref.result_type))
 
     elif pref.mode == Mode.list_:
         searchResult: List[Contact] = []
         search_str = (' ').join(pref.arguments).lower()
+        if search_str == '' and pref.maxOutput == ALL:
+            for contact in CONTACTS.values():
+                if contact.validate(pref.input_type, '', pref.search_tag):
+                    print(contact.log(pref.result_type))
+
+            exit(0)
         if search_str == '':
             print("No input!", file = sys.stderr)
             exit(1)
@@ -286,16 +297,9 @@ if __name__ == '__main__':
         if len(searchResult) == 0:
             print("No matches found!", file = sys.stderr)
             exit(1)
-        match pref.result_type:
-            case searchType.email:
-                print(('\n').join(map(lambda x : x.email, searchResult[0:pref.maxOutput])))
-            case searchType.number:
-                print(('\n').join(map(lambda x : x.number, searchResult[0:pref.maxOutput])))
-            case searchType.name:
-                print(('\n').join(map(lambda x : x.name, searchResult[0:pref.maxOutput])))
-            case searchType.tag:
-                print(('\n').join(map(lambda x : x.tag, searchResult[0:pref.maxOutput])))
-            case searchType.birthday:
-                print(('\n').join(map(lambda x : str(x.birthday), searchResult[0:pref.maxOutput])))
+        searchResult = searchResult[0:pref.maxOutput]
+
+        print(('\n').join(map(lambda x: x.log(pref.result_type), searchResult)))
+
 
 
