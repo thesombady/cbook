@@ -37,6 +37,7 @@ def print_help_info():
    sub_res.append( tab_level * TAB + '--from-number: Filter by number' )
    sub_res.append( tab_level * TAB + '--show=(n/ALL): Show n matches, or ALL matches. Defaults to 1' )
    sub_res.append( tab_level * TAB + '--tag=(None/Personal/Work/University): Filter by tag. Previous filters still apply' )
+   sub_res.append( tab_level * TAB + '-P/W/U: Filter by tag Personal, Work, and University. Previous filters still apply' )
 
    res.append('\n'.join(list(map(lambda x: tab_level * TAB + x, sub_res))))
    tab_level -= 1
@@ -127,6 +128,12 @@ class Preference:
                     else:
                         number = int(number)
                     self.maxOutput = number
+                case '-P':
+                    self.search_tag = Tag.Personal
+                case '-W':
+                    self.search_tag = Tag.Work
+                case '-U':
+                    self.search_tag = Tag.University
                 case str(x) if '--tag' in x:
                     tag = arg.split('=')[1].lower().capitalize()
                     match tag:
@@ -300,6 +307,3 @@ if __name__ == '__main__':
         searchResult = searchResult[0:pref.maxOutput]
 
         print(('\n').join(map(lambda x: x.log(pref.result_type), searchResult)))
-
-
-
