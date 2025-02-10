@@ -56,8 +56,9 @@ class searchType(IntEnum):
     name     = 1
     number   = 2
     birthday = 3
-    full     = 4
-    tag      = 5
+    matrix   = 4
+    full     = 5
+    tag      = 6
 
 class Tag(Enum):
     none       = -1
@@ -102,6 +103,8 @@ class Preference:
             match arg:
                 case '--name' | '-n':
                     self.result_type = searchType.name
+                case '--matrix' | '-m':
+                    self.result_type = searchType.matrix
                 case '--number':
                     self.result_type = searchType.number
                 case '--birthday' | '-b':
@@ -116,7 +119,7 @@ class Preference:
                     self.input_type = searchType.number
                 case '--from-birthday' | '-fb':
                     self.input_type = searchType.birthday
-                case '--help' | '-':
+                case '--help' | '-h':
                     print_help_info()
                     exit(0)
                 case 'list':
@@ -158,38 +161,42 @@ class Preference:
 @dataclass
 class Contact:
     name: str
-    email: str
-    # matrix: str    = None
+    mail: str
     birthday: date = None
-    number: str    = ''
-    tag: Tag       = Tag.none
+    number:   str  = None
+    tag:      Tag  = Tag.none
+    matrix:   str  = None
 
     def __repr__(self):
-        res: str = '{} '.format(self.name)
+        fields: List[str] = [self.name] 
         if self.tag != Tag.none:
-            res += '@{} '.format(self.tag)
-        res += '| {} '.format(self.email)
-        if self.birthday != None and self.number != '':
-            return '{} | {} | {}'.format(res, self.birthday, self.number)
-        if self.birthday != None and self.number == '':
-            return '{} | {}'.format(res, self.birthday)
-        if self.birthday == None and self.number != '':
-            return '{} | {}'.format(res, self.number)
-        if self.birthday == None and self.number == '':
-            return res
+            fields.append(f'@{self.tag}')
+        fields.append(self.mail)
+        if self.birthday != None:
+            fields.append(str(self.birthday))
+        if self.number != None:
+            fields.append(self.number)
+        if self.matrix != None:
+            fields.append(self.matrix)
+        return (' | ').join(fields)
+
+    def __str__(self):
+        fields: List[str] = [self.name] 
+        if self.tag != Tag.none:
+            fields.append(f'@{self.tag}')
+        fields.append(self.mail)
+        if self.birthday != None:
+            fields.append(str(self.birthday))
+        if self.number != None:
+            fields.append(self.number)
+        if self.matrix != None:
+            fields.append(self.matrix)
+        return (' | ').join(fields)
         
     @staticmethod
     def fromDict(contact):
-        birthday = None
-        number   = ''
-        tag      = Tag.none
-        if contact.get('Birthday'):
-            birthday = date.fromisoformat(contact['Birthday'])
-        if contact.get('Number'):
-            number = contact['Number']
-        if contact.get('Tag'):
-            tag = Tag.from_string(contact['Tag'])
-        return Contact(contact['Name'], contact['Mail'], birthday, number, tag)
+        tag      = Tag.from_string(contact.get('tag', Tag.none)); contact.pop('tag')
+        return Contact(tag = tag, **contact) # Can it be done this way?
 
     def validate(self, filter: searchType, search_term: str, search_tag: Tag) -> bool:
         search_term = search_term.lower()
@@ -202,8 +209,8 @@ class Contact:
         match filter:
             case searchType.name:
                 return self.name.lower().__contains__(search_term) and tag_filter
-            case searchType.email:
-                return self.email.lower().__contains__(search_term) and tag_filter
+            case searchType.mail:
+                return self.mail.lower().__contains__(search_term) and tag_filter
             case searchType.full:
                 return str(self).__contains__(search_term) and tag_filter
             case searchType.birthday:
@@ -212,17 +219,24 @@ class Contact:
                 return self.number.__contains__(search_term) and tag_filter
             case searchType.tag:
                 return str(self.tag).lower().__contains__(search_term) and tag_filter
+            case searchType.matrix:
+                return self.matrix.lower().__contains__(search_term) and tag_filter
+                
 
     def log(self, filter: searchType):
         match filter:
             case searchType.name:
                 return self.name
             case searchType.email:
-                return self.email
+                return self.mail
             case searchType.birthday:
                 return str(self.birthday)
             case searchType.number:
                 return self.number
+            case searchType.matrix:
+                return self.matrix
+            case searchType.full:
+                return str(self)
         
 
 CONTACTS: Dict[int, Contact] = dict()
@@ -254,7 +268,7 @@ def parseAdressBook(book_content: str):
         for j in range(offset + 1, offsets[i + 1], 2):
             key = lines[j].strip(':')
             value = lines[j + 1]
-            contact[key] = value
+            contact[key.lower()] = value
         CONTACTS[i + 1] = Contact.fromDict(contact) # i + 1 will be the line number
 
 def logAdressBook():
@@ -292,8 +306,8 @@ if __name__ == '__main__':
             for contact in CONTACTS.values():
                 if contact.validate(pref.input_type, '', pref.search_tag):
                     print(contact.log(pref.result_type))
-
             exit(0)
+
         if search_str == '':
             print("No input!", file = sys.stderr)
             exit(1)
