@@ -6,6 +6,7 @@ from enum import Enum, IntEnum
 from typing import List, Dict
 from dataclasses import dataclass
 from datetime import date
+import calendar
 
 BOOKPATH = os.path.join(os.getenv('HOME') ,'.cbook/address.book')
 TAB = '\t'
@@ -50,6 +51,7 @@ def print_help_info():
 class Mode(IntEnum):
     fzf      = 0
     list_    = 1
+    hb       = 2
     
 class searchType(IntEnum):
     email    = 0
@@ -119,6 +121,8 @@ class Preference:
                     self.input_type = searchType.number
                 case '--from-birthday' | '-fb':
                     self.input_type = searchType.birthday
+                case 'HAPPYBIRTHDAY' | 'HB':
+                    self.mode = Mode.hb
                 case '--help' | '-h':
                     print_help_info()
                     exit(0)
@@ -162,7 +166,7 @@ class Preference:
 class Contact:
     name: str
     mail: str
-    birthday: date = None
+    birthday: str  = None
     number:   str  = None
     tag:      Tag  = Tag.none
     matrix:   str  = None
@@ -182,18 +186,16 @@ class Contact:
         
     @staticmethod
     def fromDict(contact):
-        tag      = Tag.from_string(contact.get('tag', Tag.none)); contact.pop('tag')
-        return Contact(tag = tag, **contact) # Can it be done this way?
+        tag      = Tag.from_string(contact.get('tag', Tag.none));
+        contact['tag'] = tag
+        return Contact(**contact) # Can it be done this way?
 
     def validate(self, filter: searchType, search_term: str, search_tag: Tag) -> bool:
         search_term = search_term.lower()
-        tag_filter = True
-        if search_tag != None:
-            if self.tag == search_tag:
-                tag_filter = True
-            else:
-                tag_filter = False
-        return self.log(filter) and tag_filter
+        keyword_match = str(self.log(filter)).lower().__contains__(search_term)
+        # print(self.log(filter), search_term)
+        tag_match = self.tag == search_tag if search_tag != None else True
+        return keyword_match and tag_match
 
     def log(self, filter: searchType):
         match filter:
@@ -202,7 +204,7 @@ class Contact:
             case searchType.email:
                 return self.mail
             case searchType.birthday:
-                return str(self.birthday)
+                return self.birthday
             case searchType.number:
                 return self.number
             case searchType.matrix:
@@ -271,13 +273,36 @@ if __name__ == '__main__':
 
         print(CONTACTS[number].log(pref.result_type))
 
+    elif pref.mode == Mode.hb:
+        # pref.result_type = searchType.birthday
+        pref.maxOutput = ALL
+        searchResult: List[Contact] = []
+        # today = date.today()
+        today = date.fromisoformat('20250929')
+        daysInMonth = calendar.mdays[today.month]
+        # today = calendar.
+        for contact in CONTACTS.values():
+            if contact.birthday != None:
+                birthday = date.fromisoformat(contact.birthday)
+                diff: int = birthday.day - today.day 
+                if today.day == birthday.day and diff == 0:
+                    print(f'Happy birthday to {contact.name} whom is turning {today.year - birthday.year} years old.')
+                    continue
+                
+                
+                elif diff < 15 and diff > 0  and birthday.month - today.month == 0:
+                    print(f'{contact.name} is turning {today.year - birthday.year} years old in {diff} day(s)')
+                    continue
+                elif diff % daysInMonth < 15 and birthday.month - today.month == 1:
+                    print(f'{contact.name} is turning {today.year - birthday.year} years old in {diff % daysInMonth} day(s)')
     elif pref.mode == Mode.list_:
         searchResult: List[Contact] = []
         search_str = (' ').join(pref.arguments).lower()
         if search_str == '' and pref.maxOutput == ALL:
             for contact in CONTACTS.values():
                 if contact.validate(pref.input_type, '', pref.search_tag):
-                    print(contact.log(pref.result_type))
+                    match = contact.log(pref.result_type)
+                    print(match) if match != None else ''
             exit(0)
 
         if search_str == '':
