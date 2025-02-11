@@ -1,5 +1,5 @@
 # cbook
-cbook, pronounised as contact book, is a simple, yet effective terminal addressbook. Fetching mail addresses has never been easier. It’s written in Python for adaptability, and flexibility.
+Cbook, pronounised contact book, is a simple, yet effective terminal addressbook. Fetching mail addresses has never been easier. It’s written in Python for adaptability, and flexibility.
 
 ## Getting started
 
@@ -37,7 +37,9 @@ Fzf mode is named fzf mode due to it using fzf to fuzzy search for the search fi
 List mode instead lets you pass your search term(s) after the command.
 `cbook list foo bar`, searches for the name ”foo bar” in the contact list. As per default in the fzf mode, the default output is the correspondig email address.
 
+# Are you tired of having to remember birthdays?
 
+Cbook have the option to include birthdays in the contact book, therefore, it's possible to search the birthday. You can list all upcoming birthdays by just running `cbook HAPPYBIRTHDAY`.
 
 
 
