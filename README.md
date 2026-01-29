@@ -1,3 +1,5 @@
+> This project has moved direction its updated version is `contacts` found [here](https://www.github.com/thesombady/contacts). It is now more in line with the Unix-philosophy.
+
 # cbook
 Cbook, pronounised contact book, is a simple, yet effective terminal addressbook. Fetching mail addresses has never been easier. It’s written in Python for adaptability, and flexibility.
 
